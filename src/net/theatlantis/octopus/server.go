@@ -1,11 +1,11 @@
 package octopus
 
 import (
-	//	"io"
-	//	"fmt"
+//	"io"
+//	"fmt"
 )
 
 type Server struct {
-	httpPort int
+	httpPort  int
 	httpsPort int
 }

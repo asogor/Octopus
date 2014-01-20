@@ -3,64 +3,64 @@
 package octopus
 
 import (
-//	"io"
-//	"fmt"
-	"regexp"
+	//	"io"
+	//	"fmt"
 	"errors"
+	"regexp"
 )
 
 type funnelTemplate struct {
-	id FunnelId
+	id   FunnelId
 	expr regexp.Regexp
-	aid ActionId
+	aid  ActionId
 }
 
 type builder struct {
-	funnelGroup map[FunnelGroupKey] FunnelGroupBuilder
-	actions map[ActionId] Action
+	funnelGroup map[FunnelGroupKey]FunnelGroupBuilder
+	actions     map[ActionId]Action
 }
 
 type funnelGroupBuilder struct {
 	builder *builder
-	funnels map[FunnelId] *funnelDef
+	funnels map[FunnelId]*funnelDef
 }
 
 type funnelDef struct {
-	id FunnelId
+	id         FunnelId
 	expression *regexp.Regexp
-	actionId ActionId
+	actionId   ActionId
 }
 
 type Builder interface {
 	AddAction(action Action) (err error)
-    NewFunnelGroup(key FunnelGroupKey) (builder FunnelGroupBuilder,err error)
+	NewFunnelGroup(key FunnelGroupKey) (builder FunnelGroupBuilder, err error)
 }
 
 type FunnelGroupBuilder interface {
-	AddFunnel(id FunnelId,expression *regexp.Regexp, aid ActionId)(err error)
+	AddFunnel(id FunnelId, expression *regexp.Regexp, aid ActionId) (err error)
 }
 
 type Id interface {
-	toString()(id string)
+	toString() (id string)
 }
 
 func NewBuilder() (b Builder) {
-	i := &builder{make(map[FunnelGroupKey]FunnelGroupBuilder),make(map[ActionId]Action)}
+	i := &builder{make(map[FunnelGroupKey]FunnelGroupBuilder), make(map[ActionId]Action)}
 	return i
 }
 
 func (m *builder) AddAction(action Action) (err error) {
-	if _ , got := m.actions[action.getId()]; !got {
+	if _, got := m.actions[action.getId()]; !got {
 		m.actions[action.getId()] = action
-	}else{
+	} else {
 		return errors.New("Duplicate Action")
 	}
 	return nil
 }
 
-func (m *builder) NewFunnelGroup(key FunnelGroupKey) (b FunnelGroupBuilder,err error) {
-	if _ , got := m.funnelGroup[key]; !got {
-		funnelGroup := funnelGroupBuilder{m,make(map[FunnelId]*funnelDef)}
+func (m *builder) NewFunnelGroup(key FunnelGroupKey) (b FunnelGroupBuilder, err error) {
+	if _, got := m.funnelGroup[key]; !got {
+		funnelGroup := funnelGroupBuilder{m, make(map[FunnelId]*funnelDef)}
 		m.funnelGroup[key] = &funnelGroup
 		return &funnelGroup, nil
 	}
@@ -68,9 +68,9 @@ func (m *builder) NewFunnelGroup(key FunnelGroupKey) (b FunnelGroupBuilder,err e
 	return nil, errors.New("Duplicate Action")
 }
 
-func (builder *funnelGroupBuilder) AddFunnel(id FunnelId,expression *regexp.Regexp, aid ActionId) (err error) {
-	if _ , got := builder.funnels[id]; !got {
-		f := funnelDef{id,expression,aid}
+func (builder *funnelGroupBuilder) AddFunnel(id FunnelId, expression *regexp.Regexp, aid ActionId) (err error) {
+	if _, got := builder.funnels[id]; !got {
+		f := funnelDef{id, expression, aid}
 		builder.funnels[id] = &f
 	}
 
