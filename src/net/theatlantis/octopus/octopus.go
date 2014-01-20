@@ -17,9 +17,9 @@ Represents a unique funnel. A single tracking path can have multiple funnels.
  */
 type FunnelId int
 /*
-PathKey differentiates different funnel groups.
+FunnelGroupKey differentiates different funnel groups.
  */
-type PathKey string
+type FunnelGroupKey string
 /*
 Represents a unique user session
  */
@@ -38,7 +38,7 @@ const (
 
 type Context struct {
 	session SessionId
-	path PathKey
+	path FunnelGroupKey
 }
 
 type Result struct {
@@ -62,7 +62,7 @@ func (t *CounterAction) getId()(oid ActionId) {
 	return t.id
 }
 
-func (t *CounterAction) execute(c *Context,r *Result) {
+func (t *CounterAction) execute(_ *Context,r *Result) {
 	if(r.code == RC_GOT_MATCH){
 		t.MatchCounter++
 	}

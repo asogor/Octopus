@@ -53,8 +53,8 @@ func TestBuildGroup(t *testing.T) {
 	context := &Context{"session1","path1"}
 
 	fg := NewFunnelGroup(context)
-	fg.AddFunnel(1,reg1,100,result1)
-	fg.AddFunnel(2,reg2,100,result2)
+	fg.addTracker(1,reg1,100,result1)
+	fg.addTracker(2,reg2,100,result2)
 
 	reader := strings.NewReader(`Mrs. Leonora Spocky`)
 	var r rune = 0

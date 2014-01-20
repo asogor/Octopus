@@ -10,6 +10,7 @@ Vim is an editor :)
 - [ ] Write Todo
 - [ ] Remove Write Todo
 - [ ] Pick a config format, write a parser
+- [ ] Tracker lifeCycle design, pick a time to die. On first hit? On last hit? On a designated hit?
 
 ## Terms
 

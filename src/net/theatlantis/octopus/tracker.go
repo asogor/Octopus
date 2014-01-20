@@ -6,17 +6,17 @@ import (
 	"fmt"
 )
 
-type Funnel interface {
+type Tracker interface {
 	GetCurrentState()(state FunnelState)
 	WriteRune(r rune, size int, err error)
 }
 
-type FunnelGroup interface {
+type TrackerGroup interface {
 	WriteRune(r rune, size int, err error)
-	AddFunnel(id FunnelId, exp *regexp.Regexp, length int, action Action)(err error)
+	addTracker(id FunnelId, exp *regexp.Regexp, length int, action Action)(err error)
 }
 
-type funnel struct {
+type tracker struct {
 	id FunnelId
 	exp *regexp.Regexp
 	input runeChan
@@ -25,9 +25,9 @@ type funnel struct {
 	state FunnelState
 }
 
-type funnelGroup struct {
+type trackerGroup struct {
 	context *Context
-	funnels map[FunnelId] Funnel
+	trackers map[FunnelId] Tracker
 }
 
 type Entry struct {
@@ -46,32 +46,32 @@ func (rc runeChan)ReadRune() (r rune, size int, err error) {
 	return entry.r,entry.size,entry.err
 }
 
-func NewFunnelGroup(context *Context)(fg FunnelGroup) {
-	r := funnelGroup{context,make(map[FunnelId]Funnel)}
+func NewFunnelGroup(context *Context)(fg TrackerGroup) {
+	r := trackerGroup{context,make(map[FunnelId]Tracker)}
 	return &r
 }
 
-func (fg *funnelGroup)WriteRune(r rune, size int, err error){
-	for _ , funnel := range fg.funnels {
-		if(funnel.GetCurrentState() == STATE_RUN) {
-			funnel.WriteRune(r,size,err)
+func (fg *trackerGroup)WriteRune(r rune, size int, err error){
+	for _ , tracker := range fg.trackers {
+		if(tracker.GetCurrentState() == STATE_RUN) {
+			tracker.WriteRune(r,size,err)
 		}
 	}
 }
 
-func (fg *funnelGroup)AddFunnel(id FunnelId, exp *regexp.Regexp, length int, action Action)(err error){
+func (fg *trackerGroup)addTracker(id FunnelId, exp *regexp.Regexp, length int, action Action)(err error){
 	if(exp == nil){
 		panic("Regexp is nil")
 	}
-	if(fg.funnels[id] == nil){
-		fg.funnels[id] = NewFunnel(id,exp,length,action,fg.context)
+	if _, got := fg.trackers[id]; !got {
+		fg.trackers[id] = NewFunnel(id,exp,length,action,fg.context)
 	}else{
 		return fmt.Errorf("Funnel already exist: %v",id)
 	}
 	return nil
 }
 
-func NewFunnel(id FunnelId, exp *regexp.Regexp, length int, action Action,context *Context)(r Funnel) {
+func NewFunnel(id FunnelId, exp *regexp.Regexp, length int, action Action,context *Context)(r Tracker) {
 	input := make (chan *Entry, length)
 	runeInput := runeChan{input}
 	if(exp == nil){
@@ -86,12 +86,12 @@ func NewFunnel(id FunnelId, exp *regexp.Regexp, length int, action Action,contex
 	if(context == nil){
 		panic("Context is nil")
 	}
-	m := &funnel{id,exp,runeInput,action,context,STATE_RUN}
+	m := &tracker{id,exp,runeInput,action,context,STATE_RUN}
 	go m.run()
 	return m
 }
 
-func (m *funnel) run() {
+func (m *tracker) run() {
 	loc := m.exp.FindReaderIndex(m.input);
 	if(loc != nil){
 		m.action.execute(m.context,&Result{m.id,RC_GOT_MATCH,loc})
@@ -99,11 +99,11 @@ func (m *funnel) run() {
 	m.action.execute(m.context,&Result{m.id,RC_COMPLETE,nil})
 }
 
-func (m *funnel) GetCurrentState()(state FunnelState) {
+func (m *tracker) GetCurrentState()(state FunnelState) {
 	return m.state
 }
 
-func (m *funnel) WriteRune(r rune, size int, err error) {
+func (m *tracker) WriteRune(r rune, size int, err error) {
 	entry := &Entry{r,size,err}
 	m.input.input <- entry
 }
