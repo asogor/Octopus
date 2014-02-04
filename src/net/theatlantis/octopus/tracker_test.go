@@ -51,7 +51,7 @@ func TestBuildGroup(t *testing.T) {
 	result2 := &CounterAction{2, 0, 0}
 	context := &Context{"session1", "path1"}
 
-	fg := NewFunnelGroup(context)
+	fg := NewTrackerGroup(context)
 	fg.addTracker(1, reg1, 100, result1)
 	fg.addTracker(2, reg2, 100, result2)
 

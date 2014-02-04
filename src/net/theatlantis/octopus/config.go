@@ -4,7 +4,7 @@ package octopus
 
 import (
 	//	"io"
-	//	"fmt"
+	"fmt"
 	"errors"
 	"regexp"
 )
@@ -34,10 +34,12 @@ type funnelDef struct {
 type Builder interface {
 	AddAction(action Action) (err error)
 	NewFunnelGroup(key FunnelGroupKey) (builder FunnelGroupBuilder, err error)
+	NewTrackerGroup(context *Context, bufferSize int) (tracker TrackerGroup, err error)
 }
 
 type FunnelGroupBuilder interface {
 	AddFunnel(id FunnelId, expression *regexp.Regexp, aid ActionId) (err error)
+	newTrackerGroup(context *Context,bufferSize int) (tracker TrackerGroup)
 }
 
 type Id interface {
@@ -68,6 +70,14 @@ func (m *builder) NewFunnelGroup(key FunnelGroupKey) (b FunnelGroupBuilder, err 
 	return nil, errors.New("Duplicate Action")
 }
 
+func  (m *builder) NewTrackerGroup(context *Context,bufferSize int) (tracker TrackerGroup, err error) {
+	if funnelGroup , got := m.funnelGroup[context.path]; got {
+		return funnelGroup.newTrackerGroup(context,bufferSize), nil
+	}
+
+	return nil, errors.New("FunnelGroupKey Not Found: " + fmt.Sprintf("%b", context.path))
+}
+
 func (builder *funnelGroupBuilder) AddFunnel(id FunnelId, expression *regexp.Regexp, aid ActionId) (err error) {
 	if _, got := builder.funnels[id]; !got {
 		f := funnelDef{id, expression, aid}
@@ -75,4 +85,12 @@ func (builder *funnelGroupBuilder) AddFunnel(id FunnelId, expression *regexp.Reg
 	}
 
 	return errors.New("Duplicate Funnel")
+}
+
+func (builder *funnelGroupBuilder) newTrackerGroup(context *Context, bufferSize int) (tracker TrackerGroup) {
+	tg := NewTrackerGroup(context)
+	for _ , value := range builder.funnels {
+		tg.addTracker(value.id,value.expression,bufferSize,builder.builder.actions[value.actionId])
+	}
+	return tg
 }

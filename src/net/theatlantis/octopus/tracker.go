@@ -46,7 +46,7 @@ func (rc runeChan) ReadRune() (r rune, size int, err error) {
 	return entry.r, entry.size, entry.err
 }
 
-func NewFunnelGroup(context *Context) (fg TrackerGroup) {
+func NewTrackerGroup(context *Context) (tg TrackerGroup) {
 	r := trackerGroup{context, make(map[FunnelId]Tracker)}
 	return &r
 }
